@@ -1,35 +1,3 @@
-<?php
-session_start();
-require_once 'includes/db.php';
-if(!isset($_SESSION['user_id'])) { header('Location: /login.php'); exit; }
-$user_id = intval($_SESSION['user_id']);
-$stmt = $mysqli->prepare("SELECT id, plan_data, created_at FROM meal_plans WHERE user_id=? ORDER BY id DESC LIMIT 1");
-$stmt->bind_param('i', $user_id);
-$stmt->execute();
-$res = $stmt->get_result();
-$planData = null;
-if($row = $res->fetch_assoc()) $planData = json_decode($row['plan_data'], true);
-include 'includes/header.php';
-?>
-<div class="container">
-  <h1>Môj jedálniček</h1>
-  <a class="btn-primary" href="/generate_plan.php">Generovať týždenný plán</a>
-  <section class="card" style="margin-top:20px">
-    <h2>Posledný plán</h2>
-    <?php if($planData): ?>
-      <?php foreach($planData as $dayIndex => $meals): ?>
-        <div class="plan-day">
-          <h4>Deň <?php echo $dayIndex + 1; ?></h4>
-          <ul>
-            <?php foreach($meals as $m): ?>
-              <li><?php echo htmlspecialchars(ucfirst($m['slot']) . ' — ' . $m['name']); ?> (<?php echo $m['perMealCost'];?> €)</li>
-            <?php endforeach; ?>
-          </ul>
-        </div>
-      <?php endforeach; ?>
-    <?php else: ?>
-      <p>Zatiaľ nemáte žiadny uložený plán.</p>
-    <?php endif; ?>
-  </section>
-</div>
-<?php include 'includes/footer.php'; ?>
+<?php session_start(); require_once 'includes/db_connect.php'; if(empty($_SESSION['user_id'])) header('Location:/login.php'); include 'includes/header_footer.php'; $uid=intval($_SESSION['user_id']); $res=$mysqli->query("SELECT id,plan_data,created_at FROM meal_plans WHERE user_id=$uid ORDER BY id DESC LIMIT 1"); $plan=null; if($res && $row=$res->fetch_assoc()) $plan=json_decode($row['plan_data'],true); ?>
+<h2>Môj jedálniček</h2><a class="btn-primary" href="/generate_plan.php">Generovať nový plán</a>
+<?php if($plan): foreach($plan as $di=>$meals){ echo '<div class="card"><h4>Deň '.($di+1).'</h4><ul>'; foreach($meals as $m) echo '<li>'.h($m['slot']).' - '.h($m['name']).' ('.h($m['perMealCost']).' €)</li>'; echo '</ul></div>'; } else: ?><p>Zatiaľ žiadny plán.</p><?php endif; include 'includes/footer_bottom.php'; ?>
